@@ -48,16 +48,16 @@ This timer app implements the classic Pomodoro Technique while adding modern fea
 
 ## 📸 Screenshots
 
-### Pomodoro Timer in Action
-![Pomodoro Timer](/public/screenshot-timer.png)
+### ⏱️ Pomodoro Timer in Action
+![Pomodoro Timer](https://raw.githubusercontent.com/ragini-pandey/podomoro-timer/main/public/screenshot3.png)  
 *Focus mode with circular progress indicator and timer controls*
 
-### Wallpaper Settings
-![Wallpaper Settings](/public/screenshot-wallpaper.png)
+### 🎨 Wallpaper Settings
+![Wallpaper Settings](https://raw.githubusercontent.com/ragini-pandey/podomoro-timer/main/public/screenshot1.png)  
 *Browse and select from beautiful background categories*
 
-### Spotify Connection
-![Spotify Integration](/public/screenshot-spotify.png)
+### 🎧 Spotify Connection
+![Spotify Integration](https://raw.githubusercontent.com/ragini-pandey/podomoro-timer/main/public/screenshot2.png)  
 *Control your music without leaving the timer*
 
 ## 🚀 Tech Stack
