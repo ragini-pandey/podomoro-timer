@@ -1,0 +1,68 @@
+export const TIMER_MODES = {
+  POMODORO: { label: 'pomodoro', duration: 25 * 60 },
+  SHORT_BREAK: { label: 'short break', duration: 5 * 60 },
+  LONG_BREAK: { label: 'long break', duration: 15 * 60 }
+}
+
+export const BACKGROUNDS = {
+  nature: [
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=4800&q=100', 
+    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=4800&q=100', 
+    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=4800&q=100',
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=4800&q=100',
+    'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=4800&q=100',
+    'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=4800&q=100',
+    'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=4800&q=100',
+    'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=4800&q=100',
+    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=4800&q=100',
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=4800&q=100',
+    'https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=4800&q=100',
+    'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=4800&q=100',
+    'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=4800&q=100',
+    'https://images.unsplash.com/photo-1506260408121-e353d10b87c7?w=4800&q=100',
+    'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=4800&q=100',
+    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=4800&q=100',
+    'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=4800&q=100',
+    'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=4800&q=100',
+    'https://images.unsplash.com/photo-1516298773066-c48f8e9bd92b?w=4800&q=100',
+    'https://images.unsplash.com/photo-1528127269322-539801943592?w=4800&q=100',
+    'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=4800&q=100',
+  ],
+  lakes: [
+    'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=4800&q=100',
+    'https://images.unsplash.com/photo-1503891617560-5b8c2e28cbf6?w=4800&q=100',
+    'https://images.unsplash.com/photo-1439066290691-510066268af5?w=4800&q=100',
+    'https://images.unsplash.com/photo-1492571350019-22de08371fd3?w=4800&q=100',
+    'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=4800&q=100',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=4800&q=100',
+    'https://images.unsplash.com/photo-1506260408121-e353d10b87c7?w=4800&q=100',
+    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=4800&q=100',
+  ],
+  ocean: [
+    'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=4800&q=100',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=4800&q=100',
+    'https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=4800&q=100',
+    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=4800&q=100',
+    'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=4800&q=100',
+    'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=4800&q=100',
+    'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=4800&q=100',
+    'https://images.unsplash.com/photo-1484821582734-6c6c9f99a672?w=4800&q=100',
+  ],
+  city: [
+    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=4800&q=100',
+    'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=4800&q=100',
+    'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=4800&q=100',
+    'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=4800&q=100',
+    'https://images.unsplash.com/photo-1496568816309-51d7c20e3b21?w=4800&q=100',
+    'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=4800&q=100',
+  ],
+  desert: [
+    'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=4800&q=100',
+    'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=4800&q=100',
+    'https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=4800&q=100',
+  ],
+  roads: [
+    'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=4800&q=100',
+    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=4800&q=100',
+  ],
+}
