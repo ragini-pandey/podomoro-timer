@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import './SettingsWidget.css';
-import { BACKGROUNDS } from './constants';
+import { BACKGROUNDS, BackgroundSelection, BackgroundCategory } from './constants';
 
-const SettingsWidget = ({ currentBackground, onBackgroundChange }) => {
+interface SettingsWidgetProps {
+  currentBackground: BackgroundSelection | null;
+  onBackgroundChange: (background: BackgroundSelection) => void;
+}
+
+const SettingsWidget = ({ currentBackground, onBackgroundChange }: SettingsWidgetProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState('nature');
+  const [activeCategory, setActiveCategory] = useState<BackgroundCategory>('nature');
 
-  const categories = {
+  const categories: Record<BackgroundCategory, string> = {
     nature: '🏔️ Nature',
     lakes: '🏞️ Lakes',
     ocean: '🌊 Ocean',
@@ -15,7 +20,7 @@ const SettingsWidget = ({ currentBackground, onBackgroundChange }) => {
     roads: '🛣️ Roads',
   };
 
-  const isBackgroundActive = (category, index) => {
+  const isBackgroundActive = (category: BackgroundCategory, index: number): boolean => {
     if (currentBackground === null) return false;
     return currentBackground.category === category && currentBackground.index === index;
   };
@@ -36,7 +41,7 @@ const SettingsWidget = ({ currentBackground, onBackgroundChange }) => {
           </div>
           
           <div className="category-tabs">
-            {Object.entries(categories).map(([key, label]) => (
+            {(Object.entries(categories) as [BackgroundCategory, string][]).map(([key, label]) => (
               <button
                 key={key}
                 className={`category-tab ${activeCategory === key ? 'active' : ''}`}
@@ -48,7 +53,7 @@ const SettingsWidget = ({ currentBackground, onBackgroundChange }) => {
           </div>
 
           <div className="background-grid">
-            {BACKGROUNDS[activeCategory].map((bg, index) => (
+            {BACKGROUNDS[activeCategory]?.map((bg, index) => (
               <div
                 key={index}
                 className={`background-thumbnail ${isBackgroundActive(activeCategory, index) ? 'active' : ''}`}

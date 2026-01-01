@@ -48,16 +48,16 @@ This timer app implements the classic Pomodoro Technique while adding modern fea
 
 ## 📸 Screenshots
 
-### ⏱️ Pomodoro Timer in Action
-![Pomodoro Timer](https://raw.githubusercontent.com/ragini-pandey/podomoro-timer/main/public/screenshot3.png)  
+### Pomodoro Timer in Action
+![Pomodoro Timer](/public/screenshot-timer.png)
 *Focus mode with circular progress indicator and timer controls*
 
-### 🎨 Wallpaper Settings
-![Wallpaper Settings](https://raw.githubusercontent.com/ragini-pandey/podomoro-timer/main/public/screenshot1.png)  
+### Wallpaper Settings
+![Wallpaper Settings](/public/screenshot-wallpaper.png)
 *Browse and select from beautiful background categories*
 
-### 🎧 Spotify Connection
-![Spotify Integration](https://raw.githubusercontent.com/ragini-pandey/podomoro-timer/main/public/screenshot2.png)  
+### Spotify Connection
+![Spotify Integration](/public/screenshot-spotify.png)
 *Control your music without leaving the timer*
 
 ## 🚀 Tech Stack
@@ -210,6 +210,19 @@ The project uses Vite for fast development and optimized builds. Configuration c
 
 Code quality is maintained with ESLint. Configuration in [`eslint.config.js`](eslint.config.js).
 
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 

@@ -1,10 +1,24 @@
-export const TIMER_MODES = {
+export interface TimerMode {
+  label: string;
+  duration: number;
+}
+
+export type TimerModeKey = 'POMODORO' | 'SHORT_BREAK' | 'LONG_BREAK';
+
+export const TIMER_MODES: Record<TimerModeKey, TimerMode> = {
   POMODORO: { label: 'pomodoro', duration: 25 * 60 },
   SHORT_BREAK: { label: 'short break', duration: 5 * 60 },
   LONG_BREAK: { label: 'long break', duration: 15 * 60 }
 }
 
-export const BACKGROUNDS = {
+export type BackgroundCategory = 'nature' | 'lakes' | 'ocean' | 'city' | 'desert' | 'roads';
+
+export interface BackgroundSelection {
+  category: BackgroundCategory;
+  index: number;
+}
+
+export const BACKGROUNDS: Record<BackgroundCategory, string[]> = {
   nature: [
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=4800&q=100', 
     'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=4800&q=100', 

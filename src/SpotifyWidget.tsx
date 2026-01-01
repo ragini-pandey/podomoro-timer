@@ -1,23 +1,84 @@
 import { useState, useEffect } from 'react';
 import './SpotifyWidget.css';
 
+interface CurrentTrack {
+  name: string;
+  artists: string;
+}
+
+interface SpotifyPlaylist {
+  id: string;
+  name: string;
+  uri: string;
+  tracks: {
+    total: number;
+  };
+}
+
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  uri: string;
+  artists: Array<{ name: string }>;
+}
+
+interface RecentTrack {
+  track: SpotifyTrack;
+}
+
+// Extend Window interface for Spotify SDK
+declare global {
+  interface Window {
+    onSpotifyWebPlaybackSDKReady?: () => void;
+    Spotify?: {
+      Player: new (config: {
+        name: string;
+        getOAuthToken: (cb: (token: string) => void) => void;
+        volume: number;
+      }) => SpotifyPlayer;
+    };
+  }
+}
+
+interface SpotifyPlayer {
+  addListener(event: 'ready', callback: (data: { device_id: string }) => void): void;
+  addListener(event: 'player_state_changed', callback: (state: PlayerState | null) => void): void;
+  addListener(event: 'authentication_error', callback: (error: { message: string }) => void): void;
+  addListener(event: 'account_error', callback: (error: { message: string }) => void): void;
+  connect(): Promise<boolean>;
+  disconnect(): void;
+  togglePlay(): Promise<void>;
+  nextTrack(): Promise<void>;
+  previousTrack(): Promise<void>;
+}
+
+interface PlayerState {
+  paused: boolean;
+  track_window: {
+    current_track: {
+      name: string;
+      artists: Array<{ name: string }>;
+    };
+  };
+}
+
 const SpotifyWidget = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [accessToken, setAccessToken] = useState(null);
-  const [player, setPlayer] = useState(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [player, setPlayer] = useState<SpotifyPlayer | null>(null);
   const [isPaused, setIsPaused] = useState(true);
-  const [deviceId, setDeviceId] = useState(null);
-  const [currentTrack, setCurrentTrack] = useState({
+  const [deviceId, setDeviceId] = useState<string | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<CurrentTrack>({
     name: 'Not Playing',
     artists: 'Connect Spotify'
   });
-  const [userPlaylists, setUserPlaylists] = useState([]);
+  const [userPlaylists, setUserPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [showPlaylists, setShowPlaylists] = useState(false);
-  const [recentTracks, setRecentTracks] = useState([]);
+  const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
   const [showRecentTracks, setShowRecentTracks] = useState(false);
 
-  const generateCodeVerifier = () => {
+  const generateCodeVerifier = (): string => {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return btoa(String.fromCharCode.apply(null, Array.from(array)))
@@ -26,7 +87,7 @@ const SpotifyWidget = () => {
       .replace(/=+$/, '');
   };
 
-  const generateCodeChallenge = async (verifier) => {
+  const generateCodeChallenge = async (verifier: string): Promise<string> => {
     const encoder = new TextEncoder();
     const data = encoder.encode(verifier);
     const digest = await crypto.subtle.digest('SHA-256', data);
@@ -36,10 +97,15 @@ const SpotifyWidget = () => {
       .replace(/=+$/, '');
   };
 
-  const exchangeCodeForToken = async (code) => {
+  const exchangeCodeForToken = async (code: string): Promise<void> => {
     const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
     const redirectUri = import.meta.env.VITE_REDIRECT_URI || window.location.origin;
     const codeVerifier = localStorage.getItem('code_verifier');
+
+    if (!codeVerifier) {
+      alert('Code verifier not found. Please try connecting again.');
+      return;
+    }
 
     const response = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -54,6 +120,11 @@ const SpotifyWidget = () => {
         code_verifier: codeVerifier,
       }),
     });
+
+    if (response.status === 401) {
+      alert('Authentication failed. Please try connecting again.');
+      return;
+    }
 
     const data = await response.json();
     if (data.access_token) {
@@ -89,7 +160,7 @@ const SpotifyWidget = () => {
       document.body.appendChild(script);
 
       window.onSpotifyWebPlaybackSDKReady = () => {
-        const spotifyPlayer = new window.Spotify.Player({
+        const spotifyPlayer = new window.Spotify!.Player({
           name: 'Pomodoro Timer Player',
           getOAuthToken: cb => { cb(accessToken); },
           volume: 0.5
@@ -110,11 +181,52 @@ const SpotifyWidget = () => {
           setIsPaused(state.paused);
         });
 
+        // Add error listener for authentication errors
+        spotifyPlayer.addListener('authentication_error', ({ message }) => {
+          console.error('Authentication error:', message);
+          handleDisconnect();
+          alert('Your Spotify session has expired. Please connect again.');
+        });
+
+        spotifyPlayer.addListener('account_error', ({ message }) => {
+          console.error('Account error:', message);
+          handleDisconnect();
+          alert('There was an issue with your Spotify account. Please connect again.');
+        });
+
         spotifyPlayer.connect();
         setPlayer(spotifyPlayer);
       };
     }
   }, [accessToken, player]);
+
+  // Keyboard shortcuts for Spotify controls
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Only handle if Spotify is connected
+      if (!isConnected || !player) return;
+
+      switch(event.key) {
+        case 'F7':
+          event.preventDefault();
+          previousTrack();
+          break;
+        case 'F8':
+          event.preventDefault();
+          togglePlayPause();
+          break;
+        case 'F9':
+          event.preventDefault();
+          nextTrack();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isConnected, player]);
 
   const handleConnect = async () => {
     const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
@@ -195,6 +307,11 @@ const SpotifyWidget = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleDisconnect();
+          alert('Your Spotify session has expired. Please connect again.');
+          return;
+        }
         const error = await response.json();
         console.error('Failed to play playlist:', error);
         if (error.error?.reason === 'PREMIUM_REQUIRED') {
@@ -219,6 +336,12 @@ const SpotifyWidget = () => {
         }
       });
       
+      if (response.status === 401) {
+        handleDisconnect();
+        alert('Your Spotify session has expired. Please connect again.');
+        return;
+      }
+      
       if (response.ok) {
         const data = await response.json();
         setUserPlaylists(data.items);
@@ -241,6 +364,12 @@ const SpotifyWidget = () => {
         }
       });
       
+      if (response.status === 401) {
+        handleDisconnect();
+        alert('Your Spotify session has expired. Please connect again.');
+        return;
+      }
+      
       if (response.ok) {
         const data = await response.json();
         setRecentTracks(data.items);
@@ -253,7 +382,7 @@ const SpotifyWidget = () => {
     }
   };
 
-  const playPlaylist = async (playlistUri) => {
+  const playPlaylist = async (playlistUri: string): Promise<void> => {
     if (!accessToken || !deviceId) {
       alert('Spotify player not ready. Please wait a moment and try again.');
       return;
@@ -273,6 +402,11 @@ const SpotifyWidget = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleDisconnect();
+          alert('Your Spotify session has expired. Please connect again.');
+          return;
+        }
         const error = await response.json();
         console.error('Failed to play playlist:', error);
         alert('Failed to play playlist. Make sure you have an active Spotify session.');
@@ -283,7 +417,7 @@ const SpotifyWidget = () => {
     }
   };
 
-  const playTrack = async (trackUri) => {
+  const playTrack = async (trackUri: string): Promise<void> => {
     if (!accessToken || !deviceId) {
       alert('Spotify player not ready. Please wait a moment and try again.');
       return;
@@ -302,6 +436,11 @@ const SpotifyWidget = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleDisconnect();
+          alert('Your Spotify session has expired. Please connect again.');
+          return;
+        }
         const error = await response.json();
         console.error('Failed to play track:', error);
         alert('Failed to play track. Make sure you have an active Spotify session.');

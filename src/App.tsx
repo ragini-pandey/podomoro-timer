@@ -3,14 +3,39 @@ import './App.css'
 import BackgroundSlider from './BackgroundSlider'
 import SpotifyWidget from './SpotifyWidget'
 import SettingsWidget from './SettingsWidget'
-import { BACKGROUNDS, TIMER_MODES } from './constants'
+import { TIMER_MODES, TimerModeKey, BackgroundSelection } from './constants'
+import { imageCache } from './utils/imageCache'
+import { registerServiceWorker } from './utils/serviceWorker'
 
 function App() {
-  const [mode, setMode] = useState('POMODORO')
+  const [mode, setMode] = useState<TimerModeKey>('POMODORO')
   const [timeLeft, setTimeLeft] = useState(TIMER_MODES.POMODORO.duration)
   const [isRunning, setIsRunning] = useState(false)
-  const [selectedBackground, setSelectedBackground] = useState(null)
-  const audioRef = useRef(null)
+  const [selectedBackground, setSelectedBackground] = useState<BackgroundSelection | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default')
+
+  // Cache all background images on mount and request notification permission
+  useEffect(() => {
+    // Register service worker for offline caching
+    registerServiceWorker()
+
+    const cacheImages = async () => {
+      console.log('Starting to cache background images...')
+      const status = await imageCache.preloadAllBackgrounds()
+      console.log(`Image caching complete: ${status.loaded}/${status.total} loaded`, 
+        status.failed.length > 0 ? `${status.failed.length} failed` : '')
+    }
+
+    cacheImages()
+
+    // Request notification permission
+    if ('Notification' in window) {
+      Notification.requestPermission().then(permission => {
+        setNotificationPermission(permission)
+      })
+    }
+  }, [])
 
   useEffect(() => {
     let interval = null
@@ -30,13 +55,27 @@ function App() {
     if (timeLeft === 0 && isRunning) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsRunning(false)
+      
+      // Play sound
       if (audioRef.current) {
         audioRef.current.play().catch(e => console.log('Audio play failed:', e))
       }
-    }
-  }, [timeLeft, isRunning])
 
-  const handleModeChange = (newMode) => {
+      // Show notification
+      if (notificationPermission === 'granted') {
+        const modeLabel = TIMER_MODES[mode].label
+        new Notification('Timer Complete! 🎉', {
+          body: `Your ${modeLabel} session has finished. Time for a break!`,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'pomodoro-timer',
+          requireInteraction: false,
+        })
+      }
+    }
+  }, [timeLeft, isRunning, mode, notificationPermission])
+
+  const handleModeChange = (newMode: TimerModeKey) => {
     setMode(newMode)
     setTimeLeft(TIMER_MODES[newMode].duration)
     setIsRunning(false)
@@ -51,7 +90,7 @@ function App() {
     setTimeLeft(TIMER_MODES[mode].duration)
   }
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
@@ -69,7 +108,7 @@ function App() {
       />
       <div className="timer-container">
         <div className="mode-selector">
-          {Object.entries(TIMER_MODES).map(([key, value]) => (
+          {(Object.entries(TIMER_MODES) as [TimerModeKey, typeof TIMER_MODES[TimerModeKey]][]).map(([key, value]) => (
             <button
               key={key}
               className={`mode-button ${mode === key ? 'active' : ''}`}
@@ -120,7 +159,7 @@ function App() {
 
       <audio
         ref={audioRef}
-        src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3EdBDCC0fPTgjMGHm7A7+OZUQ0PVKvo7K5aGQlCmuDyu3Ed"
+        src="/timer-complete.mp3"
       />
     </div>
   )
