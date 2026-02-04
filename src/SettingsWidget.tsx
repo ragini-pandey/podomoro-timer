@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './SettingsWidget.css';
-import { BACKGROUNDS, BackgroundSelection, BackgroundCategory } from './constants';
+import { BACKGROUNDS, BackgroundSelection, BackgroundCategory, getThumbnailUrl } from './constants';
+import { imageCache } from './utils/imageCache';
 
 interface SettingsWidgetProps {
   currentBackground: BackgroundSelection | null;
@@ -10,6 +11,31 @@ interface SettingsWidgetProps {
 const SettingsWidget = ({ currentBackground, onBackgroundChange }: SettingsWidgetProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<BackgroundCategory>('nature');
+  const [thumbnails, setThumbnails] = useState<Map<string, string>>(new Map());
+
+  // Load and cache thumbnails for the active category
+  const loadCategoryThumbnails = useCallback(async (category: BackgroundCategory) => {
+    const urls = BACKGROUNDS[category] || [];
+    const newThumbnails = new Map(thumbnails);
+    
+    await Promise.all(
+      urls.map(async (url) => {
+        if (!newThumbnails.has(url)) {
+          const cachedUrl = await imageCache.loadThumbnail(url);
+          newThumbnails.set(url, cachedUrl);
+        }
+      })
+    );
+    
+    setThumbnails(newThumbnails);
+  }, [thumbnails]);
+
+  // Load thumbnails when category changes or panel opens
+  useEffect(() => {
+    if (isOpen) {
+      loadCategoryThumbnails(activeCategory);
+    }
+  }, [isOpen, activeCategory, loadCategoryThumbnails]);
 
   const categories: Record<BackgroundCategory, string> = {
     nature: '🏔️ Nature',
@@ -53,25 +79,33 @@ const SettingsWidget = ({ currentBackground, onBackgroundChange }: SettingsWidge
           </div>
 
           <div className="background-grid">
-            {BACKGROUNDS[activeCategory]?.map((bg, index) => (
-              <div
-                key={index}
-                className={`background-thumbnail ${isBackgroundActive(activeCategory, index) ? 'active' : ''}`}
-                onClick={() => {
-                  onBackgroundChange({ category: activeCategory, index });
-                  setIsOpen(false);
-                }}
-              >
-                <img src={bg.replace('w=2400', 'w=400')} alt={`${activeCategory} ${index + 1}`} />
-                {isBackgroundActive(activeCategory, index) && (
-                  <div className="active-indicator">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
-                  </div>
-                )}
-              </div>
-            ))}
+            {BACKGROUNDS[activeCategory]?.map((bg, index) => {
+              const thumbnailSrc = thumbnails.get(bg) || getThumbnailUrl(bg);
+              return (
+                <div
+                  key={index}
+                  className={`background-thumbnail ${isBackgroundActive(activeCategory, index) ? 'active' : ''}`}
+                  onClick={() => {
+                    onBackgroundChange({ category: activeCategory, index });
+                    setIsOpen(false);
+                  }}
+                >
+                  <img 
+                    src={thumbnailSrc} 
+                    alt={`${activeCategory} ${index + 1}`}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  {isBackgroundActive(activeCategory, index) && (
+                    <div className="active-indicator">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

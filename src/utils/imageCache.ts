@@ -1,4 +1,4 @@
-import { BACKGROUNDS, BackgroundCategory } from '../constants';
+import { BACKGROUNDS, BackgroundCategory, getThumbnailUrl } from '../constants';
 
 interface CacheStatus {
   loaded: number;
@@ -8,7 +8,9 @@ interface CacheStatus {
 
 class ImageCache {
   private cache: Map<string, HTMLImageElement> = new Map();
+  private thumbnailCache: Map<string, string> = new Map(); // URL -> blob URL
   private loadingPromises: Map<string, Promise<void>> = new Map();
+  private thumbnailLoadingPromises: Map<string, Promise<string>> = new Map();
 
   /**
    * Preload a single image and store it in cache
@@ -123,11 +125,63 @@ class ImageCache {
   }
 
   /**
+   * Load and cache a thumbnail image, returning a blob URL
+   */
+  async loadThumbnail(originalUrl: string): Promise<string> {
+    const thumbnailUrl = getThumbnailUrl(originalUrl);
+    
+    // Return cached blob URL if available
+    if (this.thumbnailCache.has(originalUrl)) {
+      return this.thumbnailCache.get(originalUrl)!;
+    }
+
+    // Check if already loading
+    const existingPromise = this.thumbnailLoadingPromises.get(originalUrl);
+    if (existingPromise) {
+      return existingPromise;
+    }
+
+    const promise = (async () => {
+      try {
+        const response = await fetch(thumbnailUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        this.thumbnailCache.set(originalUrl, blobUrl);
+        this.thumbnailLoadingPromises.delete(originalUrl);
+        return blobUrl;
+      } catch (error) {
+        this.thumbnailLoadingPromises.delete(originalUrl);
+        // Fallback to thumbnail URL if fetch fails
+        return thumbnailUrl;
+      }
+    })();
+
+    this.thumbnailLoadingPromises.set(originalUrl, promise);
+    return promise;
+  }
+
+  /**
+   * Get cached thumbnail URL if available
+   */
+  getCachedThumbnail(originalUrl: string): string | null {
+    return this.thumbnailCache.get(originalUrl) || null;
+  }
+
+  /**
+   * Preload all thumbnails for a category
+   */
+  async preloadCategoryThumbnails(category: BackgroundCategory): Promise<void> {
+    const urls = BACKGROUNDS[category] || [];
+    await Promise.all(urls.map(url => this.loadThumbnail(url)));
+  }
+
+  /**
    * Get cache statistics
    */
   getStats() {
     return {
       cached: this.cache.size,
+      thumbnailsCached: this.thumbnailCache.size,
       loading: this.loadingPromises.size
     };
   }
@@ -136,8 +190,14 @@ class ImageCache {
    * Clear the cache
    */
   clear(): void {
+    // Revoke blob URLs to free memory
+    this.thumbnailCache.forEach(blobUrl => {
+      URL.revokeObjectURL(blobUrl);
+    });
     this.cache.clear();
+    this.thumbnailCache.clear();
     this.loadingPromises.clear();
+    this.thumbnailLoadingPromises.clear();
   }
 }
 

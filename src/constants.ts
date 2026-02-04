@@ -18,6 +18,10 @@ export interface BackgroundSelection {
   index: number;
 }
 
+export const getThumbnailUrl = (url: string): string => {
+  return url.replace(/w=\d+/, 'w=150');
+};
+
 export const BACKGROUNDS: Record<BackgroundCategory, string[]> = {
   nature: [
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=4800&q=100', 

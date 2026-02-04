@@ -17,14 +17,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
 }
 
+.settings-toggle svg {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .settings-toggle:hover {
-  background: rgba(245, 243, 240, 0.15);
-  transform: rotate(90deg) scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: rgba(245, 243, 240, 0.18);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.settings-toggle:hover svg {
+  transform: rotate(90deg);
+}
+
+.settings-toggle:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
+}
+
+.settings-widget.open .settings-toggle {
+  background: rgba(245, 243, 240, 0.2);
+}
+
+.settings-widget.open .settings-toggle svg {
+  transform: rotate(180deg);
 }
 
 .settings-panel {
