@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import './SettingsWidget.css';
 import { BACKGROUNDS, BackgroundSelection, BackgroundCategory, getThumbnailUrl } from './constants';
 import { imageCache } from './utils/imageCache';
@@ -13,29 +13,36 @@ const SettingsWidget = ({ currentBackground, onBackgroundChange }: SettingsWidge
   const [activeCategory, setActiveCategory] = useState<BackgroundCategory>('nature');
   const [thumbnails, setThumbnails] = useState<Map<string, string>>(new Map());
 
-  // Load and cache thumbnails for the active category
-  const loadCategoryThumbnails = useCallback(async (category: BackgroundCategory) => {
-    const urls = BACKGROUNDS[category] || [];
-    const newThumbnails = new Map(thumbnails);
-    
-    await Promise.all(
-      urls.map(async (url) => {
-        if (!newThumbnails.has(url)) {
-          const cachedUrl = await imageCache.loadThumbnail(url);
-          newThumbnails.set(url, cachedUrl);
-        }
-      })
-    );
-    
-    setThumbnails(newThumbnails);
-  }, [thumbnails]);
-
   // Load thumbnails when category changes or panel opens
   useEffect(() => {
-    if (isOpen) {
-      loadCategoryThumbnails(activeCategory);
-    }
-  }, [isOpen, activeCategory, loadCategoryThumbnails]);
+    if (!isOpen) return;
+
+    const loadCategoryThumbnails = async () => {
+      const urls = BACKGROUNDS[activeCategory] || [];
+      const urlsToLoad = urls.filter(url => !thumbnails.has(url));
+      
+      if (urlsToLoad.length === 0) return;
+
+      const newEntries: [string, string][] = [];
+      
+      await Promise.all(
+        urlsToLoad.map(async (url) => {
+          const cachedUrl = await imageCache.loadThumbnail(url);
+          newEntries.push([url, cachedUrl]);
+        })
+      );
+      
+      if (newEntries.length > 0) {
+        setThumbnails(prev => {
+          const updated = new Map(prev);
+          newEntries.forEach(([url, cachedUrl]) => updated.set(url, cachedUrl));
+          return updated;
+        });
+      }
+    };
+
+    loadCategoryThumbnails();
+  }, [isOpen, activeCategory]); // thumbnails intentionally omitted to prevent infinite loop
 
   const categories: Record<BackgroundCategory, string> = {
     nature: '🏔️ Nature',
