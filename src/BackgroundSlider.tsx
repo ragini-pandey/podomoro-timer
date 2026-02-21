@@ -26,60 +26,66 @@ const BackgroundSlider = ({ selectedBackground }: BackgroundSliderProps) => {
     }
   }, [selectedBackground]);
 
-  useEffect(() => {
-    if (selectedBackground !== undefined && selectedBackground !== null) {
-      return;
+  // Calculate flat index for current position
+  const flatIndex = Object.keys(BACKGROUNDS).reduce((acc, cat, catIdx) => {
+    if (cat === currentIndex.category) return acc + currentIndex.index;
+    if (catIdx < Object.keys(BACKGROUNDS).indexOf(currentIndex.category)) {
+      return acc + BACKGROUNDS[cat as keyof typeof BACKGROUNDS].length;
     }
+    return acc;
+  }, 0);
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const flatIndex = Object.keys(BACKGROUNDS).reduce((acc, cat, catIdx) => {
-          if (cat === prevIndex.category) {
-            return acc + prevIndex.index;
-          }
-          if (catIdx < Object.keys(BACKGROUNDS).indexOf(prevIndex.category)) {
-            return acc + BACKGROUNDS[cat as keyof typeof BACKGROUNDS].length;
-          }
-          return acc;
-        }, 0);
+  // Get current background URL
+  const currentBackgroundUrl = allBackgrounds[flatIndex];
+
+  // Preload all background images in the background after initial load
+  useEffect(() => {
+    const preloadImages = () => {
+      const imagesToPreload = allBackgrounds.filter(url => url !== currentBackgroundUrl);
+      
+      let currentIndex = 0;
+      
+      const loadNextBatch = () => {
+        // Load 3 images at a time to avoid overwhelming the network
+        const batchSize = 3;
+        const batch = imagesToPreload.slice(currentIndex, currentIndex + batchSize);
         
-        const nextFlatIndex = (flatIndex + 1) % allBackgrounds.length;
-        let count = 0;
-        for (const [cat, bgs] of Object.entries(BACKGROUNDS)) {
-          if (nextFlatIndex < count + bgs.length) {
-            return { category: cat as keyof typeof BACKGROUNDS, index: nextFlatIndex - count };
+        batch.forEach(url => {
+          const img = new Image();
+          img.src = url;
+        });
+        
+        currentIndex += batchSize;
+        
+        // If there are more images, schedule the next batch
+        if (currentIndex < imagesToPreload.length) {
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => loadNextBatch(), { timeout: 2000 });
+          } else {
+            setTimeout(loadNextBatch, 100);
           }
-          count += bgs.length;
+        } else {
+          console.log('All background images preloaded');
         }
-        return prevIndex;
-      });
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, [selectedBackground, allBackgrounds.length]);
+      };
+      
+      // Start preloading after a short delay to ensure initial page is fully loaded
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => loadNextBatch(), { timeout: 2000 });
+      } else {
+        setTimeout(loadNextBatch, 2000);
+      }
+    };
+    
+    preloadImages();
+  }, [allBackgrounds, currentBackgroundUrl]);
 
   return (
     <div className="background-slider">
-      {allBackgrounds.map((bg, index) => {
-        const isActive = bg === BACKGROUNDS[currentIndex.category]?.[currentIndex.index];
-        
-        const flatIndex = Object.keys(BACKGROUNDS).reduce((acc, cat, catIdx) => {
-          if (cat === currentIndex.category) return acc + currentIndex.index;
-          if (catIdx < Object.keys(BACKGROUNDS).indexOf(currentIndex.category)) {
-            return acc + BACKGROUNDS[cat as keyof typeof BACKGROUNDS].length;
-          }
-          return acc;
-        }, 0);
-        const wasPrevious = index === (flatIndex - 1 + allBackgrounds.length) % allBackgrounds.length;
-
-        return (
-          <div
-            key={index}
-            className={`background-slide ${isActive ? 'active' : ''} ${wasPrevious ? 'previous' : ''}`}
-            style={{ backgroundImage: `url(${bg})` }}
-          />
-        );
-      })}
+      <div
+        className="background-slide active"
+        style={{ backgroundImage: `url(${currentBackgroundUrl})` }}
+      />
       <div className="background-overlay" />
     </div>
   );
