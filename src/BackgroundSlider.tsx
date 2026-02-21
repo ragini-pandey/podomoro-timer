@@ -46,7 +46,7 @@ const BackgroundSlider = ({ selectedBackground }: BackgroundSliderProps) => {
       let currentIndex = 0;
       
       const loadNextBatch = () => {
-        // Load 3 images at a time to avoid overwhelming the network
+        // Load 3 images at a time
         const batchSize = 3;
         const batch = imagesToPreload.slice(currentIndex, currentIndex + batchSize);
         
@@ -59,22 +59,14 @@ const BackgroundSlider = ({ selectedBackground }: BackgroundSliderProps) => {
         
         // If there are more images, schedule the next batch
         if (currentIndex < imagesToPreload.length) {
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(() => loadNextBatch(), { timeout: 2000 });
-          } else {
-            setTimeout(loadNextBatch, 100);
-          }
+          setTimeout(loadNextBatch, 200);
         } else {
           console.log('All background images preloaded');
         }
       };
       
-      // Start preloading after a short delay to ensure initial page is fully loaded
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => loadNextBatch(), { timeout: 2000 });
-      } else {
-        setTimeout(loadNextBatch, 2000);
-      }
+      // Start preloading immediately after a brief delay
+      setTimeout(loadNextBatch, 2000);
     };
     
     preloadImages();
